@@ -4,8 +4,13 @@ the Flask framework, and the Google Maps API.
 '''
 
 from flask import Flask, render_template, abort
-app = Flask(__name__)
+# import request
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
+
+app = Flask(__name__)
 
 class School:
     def __init__(self, key, name, lat, lng):
@@ -21,17 +26,26 @@ schools = (
 )
 schools_by_key = {school.key: school for school in schools}
 
+nearby_search_url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=-33.8670522%2C151.1957362&radius=1500&type=restaurant&keyword=cruise&key=" + os.getenv("API_KEY")
+
+
 
 @app.route("/")
 def index():
-    return render_template('index.html', schools=schools)
+    school = schools_by_key.get('hv')
+    return render_template('index.html',
+        school = school,
+        map_api = "https://maps.googleapis.com/maps/api/js?key={}-L0&callback=initMap".format(os.getenv("API_KEY"))
+    )
+    # return render_template('index.html', schools=schools)
 
 
 @app.route("/<school_code>")
 def show_school(school_code):
-    school = schools_by_key.get(school_code)
+    # school = schools_by_key.get(school_code)
+    school = schools_by_key.get('hv')
     if school:
-        return render_template('map.html', school=school)
+        return render_template('index.html', school=school)
     else:
         abort(404)
 
