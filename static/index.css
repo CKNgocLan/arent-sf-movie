@@ -1,3 +1,7 @@
+.container {
+    padding-top: 5em;
+}
+
 #map {
     height: 180px;
 }
