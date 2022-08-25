@@ -17,11 +17,6 @@ import os
 # pandas
 import pandas as pd
 
-# from OSMPythonTools.api import Api
-# api = Api()
-# way = api.query('way/5887599')
-# from OSMPythonTools.overpass import Overpass
-# overpass = Overpass()
 load_dotenv()
 
 app = Flask(__name__)
