@@ -1,11 +1,20 @@
 
+from cmath import nan
 import time
+from urllib import response
 import grequests
 import pandas as pd
+import numpy as np
 from urllib.parse import urlencode
 
+from requests import Response
+
 df = pd.read_csv('Film_Locations_in_San_Francisco.csv')
+# df = pd.read_csv('dataset.csv')
 search_url = "https://nominatim.openstreetmap.org/search.php"
+coor_dataset = 'Coordinates.csv'
+
+coors = ['lat', 'lon']
 
 def preprocessAddress(address = ""):
     if pd.isnull(address):
@@ -14,44 +23,42 @@ def preprocessAddress(address = ""):
     result = address.lower().replace(" ", "+").replace('streets', 'st')#.replace("and", ", ")
     return result
 
-def generateCoordinateCsv(row_number = 10):
+def generateCoordinateCsv(row_number: int):
+    term_df = df.head(row_number)
     urls = list(map(lambda location: "{}?{}".format(search_url, urlencode({
         "q": preprocessAddress(location),
         "limit": 1,
         "format": "jsonv2"
-    })), df.head(row_number)['Locations'].values))
+    })), term_df['Locations'].values))
+    print(*urls, sep='\n')
 
-    responses = (grequests.get(url) for url in urls)
-    result = grequests.map(responses, size = 30)
+    unsent_responses = (grequests.get(url) for url in urls)
+    responses = grequests.map(unsent_responses, size = 30)
 
-    return result
+    json_responses = list(map(lambda response: response.json(), responses))
+
+    coor_df = pd.DataFrame(data={
+        'Locations': term_df['Locations'].values,
+        'Latitude': [js[0]['lat'] if len(js) > 0 and 'content-type' in response.headers and 'application/json' in response.headers['content-type'] else np.nan for js in json_responses],
+        'Longitude': [js[0]['lon'] if len(js) > 0 and 'content-type' in response.headers and 'application/json' in response.headers['content-type'] else np.nan for js in json_responses],
+    })
+
+    # lst = list(map(lambda response: response if len(response) > 0 else np.nan, json_responses))
+
+    # print(coor_df)
+    total_df = df.merge(right=coor_df, on='Locations', how='left')
+
+    return total_df
 
 def main():
     start = time.time()
-    row_number = 10
-    # urls = list(map(lambda location: "{}?{}".format(search_url, urlencode({
-    #     "q": preprocessAddress(location),
-    #     "limit": 1,
-    #     "format": "jsonv2"
-    # })), df.head(row_number)['Locations'].values))
-    # responses = (grequests.get(url) for url in urls)
-    # result = grequests.map(responses, size = 30)
+    row_number = 12
+    # pd.read_csv('Film_Locations_in_San_Francisco.csv').iloc[:, [1, 2]].copy().head(10).to_csv('dataset.csv', index=False)
+    print("STARTED ...")
+    processed_df = generateCoordinateCsv(row_number)
+    print("END after {:.2f} seconds - {} records".format((time.time() - start), row_number))
+    print("Exporting CSV ...")
+    processed_df.to_csv(coor_dataset, float_format='%.3f')
+    print("Exported {} file".format(coor_dataset))
 
-    responses = generateCoordinateCsv(row_number)
-    print(list(map(lambda res: res.json(), responses)))
-    print("{:.2f} seconds - {} records".format((time.time() - start), row_number))
-
-    # print(result)
-
-    # for index, row in df.head(10).iterrows():
-    #     if pd.isnull(row['Locations']):
-    #         continue
-    
-    #     parameters = urlencode({
-    #         "q": preprocessAddress(row['Locations']),
-    #         "limit": 1,
-    #         "format": "jsonv2"
-    #     })
-    #     urls = "{}?{}".format(search_url, parameters)
-        
 main()
