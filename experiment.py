@@ -1,5 +1,6 @@
 
 from cmath import nan
+import string
 import time
 from urllib import response
 import grequests
@@ -23,6 +24,7 @@ def preprocessAddress(address = ""):
     result = address.lower().replace(" ", "+").replace('streets', 'st')#.replace("and", ", ")
     return result
 
+
 def generateCoordinateCsv(row_number: int):
     term_df = df.head(row_number)
     urls = list(map(lambda location: "{}?{}".format(search_url, urlencode({
@@ -30,35 +32,45 @@ def generateCoordinateCsv(row_number: int):
         "limit": 1,
         "format": "jsonv2"
     })), term_df['Locations'].values))
-    print(*urls, sep='\n')
+    # print(*urls, sep='\n')
 
     unsent_responses = (grequests.get(url) for url in urls)
-    responses = grequests.map(unsent_responses, size = 30)
+    responses = grequests.map(unsent_responses, size=30)
 
-    json_responses = list(map(lambda response: response.json(), responses))
+    json_responses = list(map(lambda response: response.json() if response.status_code == 200 else None, responses))
+    # json_responses = []
+    # for response in responses:
+    #     print(response)
+    #     print(len(response.json()))
+    #     print("---------------------------------------")
 
     coor_df = pd.DataFrame(data={
         'Locations': term_df['Locations'].values,
-        'Latitude': [js[0]['lat'] if len(js) > 0 and 'content-type' in response.headers and 'application/json' in response.headers['content-type'] else np.nan for js in json_responses],
-        'Longitude': [js[0]['lon'] if len(js) > 0 and 'content-type' in response.headers and 'application/json' in response.headers['content-type'] else np.nan for js in json_responses],
+        'Latitude': [defCoor(js, 'lat') for js in json_responses],
+        'Longitude': [defCoor(js, 'lon') for js in json_responses],
     })
-
-    # lst = list(map(lambda response: response if len(response) > 0 else np.nan, json_responses))
-
-    # print(coor_df)
     total_df = df.merge(right=coor_df, on='Locations', how='left')
 
-    return total_df
+    print("Exporting CSV ...")
+    total_df.to_csv(coor_dataset, float_format='%.3f')
+    print("Exported {} file".format(coor_dataset))
+
+def defCoor(json_response, dict_key: string):
+    if (json_response is not None
+        and len(json_response) > 0
+        # and 'content-type' in response.headers
+        # and 'application/json' in response.headers['content-type']
+    ):
+        return json_response[0][dict_key]
+    else:
+        return np.nan
 
 def main():
     start = time.time()
-    row_number = 12
-    # pd.read_csv('Film_Locations_in_San_Francisco.csv').iloc[:, [1, 2]].copy().head(10).to_csv('dataset.csv', index=False)
+    row_number = len(df.index)
+    # pd.read_csv('Film_Locations_in_San_Francisco.csv').iloc[:, [1, 2]].copy().head(row_number).to_csv('dataset.csv', index=False)
     print("STARTED ...")
-    processed_df = generateCoordinateCsv(row_number)
+    generateCoordinateCsv(row_number)
     print("END after {:.2f} seconds - {} records".format((time.time() - start), row_number))
-    print("Exporting CSV ...")
-    processed_df.to_csv(coor_dataset, float_format='%.3f')
-    print("Exported {} file".format(coor_dataset))
 
 main()
