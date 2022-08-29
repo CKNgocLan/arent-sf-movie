@@ -11,7 +11,7 @@ import numpy as np
 
 from dataclasses import replace
 from json import dumps
-from flask import Flask, render_template
+from flask import Flask, render_template, request, jsonify
 
 from dotenv import load_dotenv
 import os
@@ -58,7 +58,6 @@ def generateCoordinateCsv(row_number: int):
     print("Exporting CSV ...")
     total_df.to_csv(os.getenv('COORDINATES_DATASET'), float_format='%.3f')
     print("Exported {} file".format(os.getenv('COORDINATES_DATASET')))
-    # total_df.to_csv(coor_dataset, float_format='%.3f')
     # print("Exported {} file".format(coor_dataset))
 
 def defCoor(json_response, dict_key: string):
@@ -67,6 +66,21 @@ def defCoor(json_response, dict_key: string):
         return json_response[0][dict_key]
     else:
         return np.nan
+
+def getCoordinatesDf(title):
+    if title:
+        return df[['Title', 'Latitude', 'Longitude']].loc[df['Title'].str.contains(title)].transpose().to_dict()
+    else:
+        return df[['Title', 'Latitude', 'Longitude']].transpose().to_dict()
+
+@app.route("/getLocations", methods=['GET'])
+def getLocations():
+    movie_title = request.args.get('title')
+
+    coors_dict = getCoordinatesDf(title=movie_title)
+    return jsonify(
+        locations_dict = dumps(coors_dict)
+    )
 
 @app.route("/")
 def index():
@@ -78,19 +92,13 @@ def index():
         generateCoordinateCsv(len(df.index))
         print("Generating CSV time: {}".format(datetime.now() - start))
 
-    coors_dictt = df[['Title', 'Latitude', 'Longitude']].transpose().to_dict()
+    coors_dict = getCoordinatesDf("")
 
     return render_template('index.html'
         , sf_coor = os.getenv("SF_COORDINATE")
-        , title_layer_url_template = os.getenv("TITLE_LAYER_URL_TEMPLATE")
-        , title_layer_options = dumps({
-            'maxZoom': 50,
-            'attribution': '© OpenStreetMap'
-        })
         , autocomplete_search_source = dumps(list(dict.fromkeys(df['Title'].tolist())))
-        , locations_dict = dumps(coors_dictt)
+        , locations_dict = dumps(coors_dict)
     )
-    # return render_template('index.html', schools=schools)
 
 if __name__ == '__main__':
     app.run(debug = True)

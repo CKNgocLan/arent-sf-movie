@@ -36,15 +36,23 @@
 <body>
     <!-- <h1>Arent SF Movies Test</h1> -->
     <div class="container">
-        <div id="map" style="width:100%; height:500px;"></div>
+        <b>
+            <p>Title</p>
+        </b>
+    
+        <input
+            type="text"
+            class="typeahead"
+            id="title_input",
+            data-provide="typeahead"
+            placeholder="Enter Title of movie"
+        />
+        
+        <br>
+        <br>
 
-        <b><p>Title</p></b>
-  
-        <input type="text" class="typeahead" 
-            data-provide="typeahead" 
-            placeholder="Enter name of movie" />
+        <div id="map"></div>
     </div>
-
 </body>
 
 <script type="text/javascript" src="{{url_for('static', filename='index.js')}}"></script>
@@ -52,15 +60,13 @@
     $(document).ready(function() {
         // Initialize and show map
         initMap({{sf_coor}},
-            {{title_layer_url_template|tojson}},
-            {{title_layer_options|tojson}},
             {{locations_dict|tojson}}
         );
 
         // Add source to auto-complete search input
         addAutoSearchSource({{autocomplete_search_source|tojson}});
 
-        // showValues({{locations_dict|tojson}})
+        $('#title_input').focus();
     })
 </script>
 

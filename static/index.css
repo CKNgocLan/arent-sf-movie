@@ -1,7 +1,9 @@
 .container {
-    padding-top: 5em;
+    padding-top: 1em;
 }
 
 #map {
-    height: 180px;
+    /* height: 180px; */
+    height:500px;
+    width:100%;
 }

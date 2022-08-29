@@ -6,30 +6,31 @@ class Movie {
     }
 }
 
-function initMap(sf_coor, title_layer_url_template, title_layer_options, locations_dict) {
-    var map = L.map('map').setView(sf_coor, 12);
+var map;
 
-    L.tileLayer(title_layer_url_template, JSON.parse(title_layer_options)).addTo(map);
+function initMap(sf_coor, locations_dict) {
+    this.map = L.map('map').setView(sf_coor, 12);
 
-    // L.marker([37.769368099999994, -122.48218371117709]).addTo(map);
+    L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+            'maxZoom': 50,
+            'attribution': '© OpenStreetMap'
+        }).addTo(map);
+
+    showMarkers(locations_dict)
+}
+
+function showMarkers(locations_dict) {
+    $(".leaflet-marker-icon").remove(); $(".leaflet-popup").remove();
+    $(".leaflet-pane.leaflet-shadow-pane").remove();
 
     locations = JSON.parse(locations_dict)
-    // for(let index = 0; index < 10; index++) {
-    //     console.log(locations[index])
-    // }
-    // locs = locations.map(l => new Movie(l.Title, l.Latitude, l.Longitude))
-    loc_entries = Object.entries(locations)//.slice(0, 4)
-    // console.log(loc_entries)
+    loc_entries = Object.entries(locations)
     movies = loc_entries.map(l => new Movie(l[1].Title, l[1].Latitude, l[1].Longitude))
-    // console.log(`Lat: ${movies[1].lat} - Lon: ${movies[1].lon}`)
-    // L.marker([movies[1].lat, movies[1].lon]).addTo(map);
     for(let movie of movies) {
-        // console.log([movie.lat, movie.lon])
-        L.marker([movie.lat, movie.lon]).addTo(map);
+        L.marker([movie.lat, movie.lon]).addTo(this.map);
     }
-
-    // l = locations[0]
-    // console.log(new Movie(l.Title, l.Latitude, l.Longitude))
 }
 
 function addAutoSearchSource(coor_df) {
@@ -45,16 +46,12 @@ function addAutoSearchSource(coor_df) {
 
         if (current) {
             // Some item from your input matches with entered data
-            if (current.name == $input.val()) {
-                matches.push(current.name);
+            if (current == $input.val()) {
+                matches.push(current);
             }
         }
+        $.get('/getLocations', {'title': $input.val()} , function(response, status) {
+            showMarkers(response.locations_dict)
+        })
     });
-
-    // console.log('Search Source:')
-    // console.log(JSON.parse(coor_df))
-}
-
-function showValues(obj) {
-    console.log(obj)
 }
