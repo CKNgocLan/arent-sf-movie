@@ -2,7 +2,6 @@
 from cmath import nan
 import string
 import time
-from urllib import response
 import grequests
 import pandas as pd
 import numpy as np
@@ -67,10 +66,15 @@ def defCoor(json_response, dict_key: string):
 
 def main():
     start = time.time()
-    row_number = len(df.index)
+    dataset_file = 'dataset.csv'
+    filtered_dataset_file = 'filtered_dataset.csv'
+    row_number = 10 # len(df.index)
     # pd.read_csv('Film_Locations_in_San_Francisco.csv').iloc[:, [1, 2]].copy().head(row_number).to_csv('dataset.csv', index=False)
     print("STARTED ...")
-    generateCoordinateCsv(row_number)
+    # pd.read_csv('Coordinates.v1.0.csv').drop(columns=['Unnamed: 0']).drop_duplicates().to_csv(dataset_file, index=False)
+    ds = pd.read_csv(dataset_file)
+    ds.loc[(ds['Latitude'].notnull() & ds['Longitude'].notnull())].to_csv(filtered_dataset_file, index=False)
+    # generateCoordinateCsv(row_number)
     print("END after {:.2f} seconds - {} records".format((time.time() - start), row_number))
 
 main()
