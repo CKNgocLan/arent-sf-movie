@@ -12,7 +12,6 @@ import numpy as np
 from dataclasses import replace
 from json import dumps
 from flask import Flask, render_template
-# import grequests
 
 from dotenv import load_dotenv
 import os
@@ -23,11 +22,13 @@ import pandas as pd
 
 load_dotenv()
 
+film_dataset_file = 'Film_Locations_in_San_Francisco.csv'
+coordinate_file = 'Coordinates.csv'
+
 app = Flask(__name__)
 
 # Read CSV file
-df = pd.read_csv('Film_Locations_in_San_Francisco.csv')
-coor_dataset = 'Coordinates.csv'
+df = pd.read_csv(coordinate_file)
 
 def preprocessAddress(address = ""):
     result = address.lower().replace(" ", "+").replace('streets', 'st')#.replace("and", ", ")
@@ -77,6 +78,7 @@ def index():
         generateCoordinateCsv(len(df.index))
         print("Generating CSV time: {}".format(datetime.now() - start))
 
+    coors_dictt = df[['Title', 'Latitude', 'Longitude']].transpose().to_dict()
 
     return render_template('index.html'
         , sf_coor = os.getenv("SF_COORDINATE")
@@ -85,6 +87,8 @@ def index():
             'maxZoom': 50,
             'attribution': '© OpenStreetMap'
         })
+        , autocomplete_search_source = dumps(list(dict.fromkeys(df['Title'].tolist())))
+        , locations_dict = dumps(coors_dictt)
     )
     # return render_template('index.html', schools=schools)
 
