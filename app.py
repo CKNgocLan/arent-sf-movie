@@ -57,22 +57,18 @@ def generateCoordinateCsv():
     json_responses = list(map(lambda response: response.json() if response is not None and response.status_code == 200 else None, responses))
 
     pd.DataFrame(data={
-        # 'Title': term_df['Title'].values,
         'Locations': term_df['Locations'].values,
         'Latitude': [defCoor(js, 'lat') for js in json_responses],
         'Longitude': [defCoor(js, 'lon') for js in json_responses],
     }).to_csv('coor_df.csv', mode='w', index=False)
     
     coor_df = pd.read_csv('coor_df.csv')
-    print("COOR_DF")
-    print(coor_df.head(5))
 
     total_df = term_df.merge(right=coor_df, on='Locations', how='right')
 
     print("Exporting CSV ...")
     total_df.to_csv(os.getenv('COORDINATES_DATASET'), mode='w', index=False, float_format='%.3f')
     print("Exported {} file".format(os.getenv('COORDINATES_DATASET')))
-    # print("Exported {} file".format(coor_dataset))
 
 def defCoor(json_response, dict_key: string):
     if (json_response is not None
@@ -85,7 +81,7 @@ def getCoordinatesDf(title):
     if title:
         return df[['Title', 'Latitude', 'Longitude']].loc[df['Title'].str.contains(title)].transpose().to_dict()
     else:
-        return df[['Locations', 'Latitude', 'Longitude']].transpose().to_dict()
+        return df[['Locations', 'Latitude', 'Longitude']].loc[~df['Locations'].isnull()].transpose().to_dict()
 
 @app.route("/getLocations", methods=['GET'])
 def getLocations():
@@ -98,7 +94,6 @@ def getLocations():
 
 @app.route("/")
 def index():
-
     global df
     if exists(os.getenv('COORDINATES_DATASET')):
         print('Coordinates CSV file is existing!')
