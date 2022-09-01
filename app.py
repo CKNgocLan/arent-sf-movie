@@ -1,6 +1,7 @@
 
 # grequests
-# import grequests
+import grequests
+import requests
 
 from datetime import datetime
 from re import search
@@ -28,14 +29,14 @@ coordinate_file = 'Coordinates.csv'
 app = Flask(__name__)
 
 # Read CSV file
-df = pd.read_csv(coordinate_file)
+# df = pd.read_csv(coordinate_file)
 
 def preprocessAddress(address = ""):
-    result = address.lower().replace(" ", "+").replace('streets', 'st')#.replace("and", ", ")
-    return result
+    result = str(address).lower().replace(" ", "+").replace('streets', 'st')
+    return "{}, San Francisco".format(result)
 
-def generateCoordinateCsv(row_number: int):
-    term_df = df.head(row_number)
+def generateCoordinateCsv():
+    term_df = pd.read_csv(film_dataset_file)#.head(len(df.index))
     search_url = os.getenv("SEARCH_URL")
     urls = list(map(lambda location: "{}?{}".format(search_url, urlencode({
         "q": preprocessAddress(location),
@@ -43,20 +44,33 @@ def generateCoordinateCsv(row_number: int):
         "format": "jsonv2"
     })), term_df['Locations'].values))
 
+    # print("TERM_DF")
+    # print(term_df)
+    # term_df.reset_index(drop=True)
+    term_df.to_csv("term_df.csv", mode='w', index=False)
+
     # unsent_responses = (grequests.get(url) for url in urls)
+    print("Fetching coordinations...")
     responses = grequests.map((grequests.get(url) for url in urls), size=30)
+    print("End of fetching coordinations...")
 
-    json_responses = list(map(lambda response: response.json() if response.status_code == 200 else None, responses))
+    json_responses = list(map(lambda response: response.json() if response is not None and response.status_code == 200 else None, responses))
 
-    coor_df = pd.DataFrame(data={
+    pd.DataFrame(data={
+        # 'Title': term_df['Title'].values,
         'Locations': term_df['Locations'].values,
         'Latitude': [defCoor(js, 'lat') for js in json_responses],
         'Longitude': [defCoor(js, 'lon') for js in json_responses],
-    })
-    total_df = df.merge(right=coor_df, on='Locations', how='left')
+    }).to_csv('coor_df.csv', mode='w', index=False)
+    
+    coor_df = pd.read_csv('coor_df.csv')
+    print("COOR_DF")
+    print(coor_df.head(5))
+
+    total_df = term_df.merge(right=coor_df, on='Locations', how='right')
 
     print("Exporting CSV ...")
-    total_df.to_csv(os.getenv('COORDINATES_DATASET'), float_format='%.3f')
+    total_df.to_csv(os.getenv('COORDINATES_DATASET'), mode='w', index=False, float_format='%.3f')
     print("Exported {} file".format(os.getenv('COORDINATES_DATASET')))
     # print("Exported {} file".format(coor_dataset))
 
@@ -71,7 +85,7 @@ def getCoordinatesDf(title):
     if title:
         return df[['Title', 'Latitude', 'Longitude']].loc[df['Title'].str.contains(title)].transpose().to_dict()
     else:
-        return df[['Title', 'Latitude', 'Longitude']].transpose().to_dict()
+        return df[['Locations', 'Latitude', 'Longitude']].transpose().to_dict()
 
 @app.route("/getLocations", methods=['GET'])
 def getLocations():
@@ -85,14 +99,20 @@ def getLocations():
 @app.route("/")
 def index():
 
+    global df
     if exists(os.getenv('COORDINATES_DATASET')):
-        print('Having coordinates CSV file')
+        print('Coordinates CSV file is existing!')
+        df = pd.read_csv(os.getenv('COORDINATES_DATASET'))
     else:
         start=datetime.now()
-        generateCoordinateCsv(len(df.index))
+        df = pd.read_csv(film_dataset_file)
+        print("Generating CSV file...")
+        generateCoordinateCsv()
         print("Generating CSV time: {}".format(datetime.now() - start))
 
-    coors_dict = getCoordinatesDf("")
+    df = pd.read_csv(os.getenv('COORDINATES_DATASET'))
+    df = df[df['Latitude'].notnull()]
+    coors_dict = getCoordinatesDf(None)
 
     return render_template('index.html'
         , sf_coor = os.getenv("SF_COORDINATE")
@@ -101,4 +121,7 @@ def index():
     )
 
 if __name__ == '__main__':
-    app.run(debug = True)
+    from gevent import monkey
+    monkey.patch_all()
+
+    app.run(debug = False)
