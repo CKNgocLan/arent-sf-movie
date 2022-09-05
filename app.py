@@ -22,8 +22,10 @@ import pandas as pd
 
 load_dotenv()
 
-film_dataset_file = 'Film_Locations_in_San_Francisco.csv'
-coordinate_file = 'Coordinates.csv'
+film_dataset_file = os.getenv('SF_MOVIES_FILE')
+coordinate_file = os.getenv('COORDINATES_DATASET')
+
+coor_df_file = 'coor_df.csv'
 
 app = Flask(__name__)
 
@@ -40,7 +42,6 @@ def generateCoordinateCsv():
         "limit": 1,
         "format": "jsonv2"
     })), term_df['Locations'].values))
-    term_df.to_csv("term_df.csv", mode='w', index=False)
 
     print("Fetching coordinations...")
     responses = grequests.map((grequests.get(url) for url in urls), size=30)
@@ -52,15 +53,15 @@ def generateCoordinateCsv():
         'Locations': term_df['Locations'].values,
         'Latitude': [defCoor(js, 'lat') for js in json_responses],
         'Longitude': [defCoor(js, 'lon') for js in json_responses],
-    }).to_csv('coor_df.csv', mode='w', index=False)
+    }).to_csv(coor_df_file, mode='w', index=False)
     
-    coor_df = pd.read_csv('coor_df.csv')
+    coor_df = pd.read_csv(coor_df_file)
 
     total_df = term_df.merge(right=coor_df, on='Locations', how='right')
 
     print("Exporting CSV ...")
-    total_df.to_csv(os.getenv('COORDINATES_DATASET'), mode='w', index=False, float_format='%.3f')
-    print("Exported {} file".format(os.getenv('COORDINATES_DATASET')))
+    total_df.to_csv(coordinate_file, mode='w', index=False, float_format='%.3f')
+    print("Exported {} file".format(coordinate_file))
 
 def defCoor(json_response, dict_key: string):
     if (json_response is not None
@@ -87,9 +88,9 @@ def getLocations():
 @app.route("/")
 def index():
     global df
-    if exists(os.getenv('COORDINATES_DATASET')):
+    if exists(coordinate_file):
         print('Coordinates CSV file is existing!')
-        df = pd.read_csv(os.getenv('COORDINATES_DATASET'))
+        df = pd.read_csv(coordinate_file)
     else:
         start=datetime.now()
         df = pd.read_csv(film_dataset_file)
@@ -97,7 +98,7 @@ def index():
         generateCoordinateCsv()
         print("Generating CSV time: {}".format(datetime.now() - start))
 
-    df = pd.read_csv(os.getenv('COORDINATES_DATASET'))
+    df = pd.read_csv(coordinate_file)
     df = df[df['Latitude'].notnull()]
     coors_dict = getCoordinatesDf(None)
 
