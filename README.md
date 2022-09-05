@@ -8,10 +8,8 @@
 
 2. [Solution](#sol)
     1. [Description](#sol-description)
-    2. [Modivations of Choices](#sol-motivation)
-    3. [Discussion](#sol-discussion)
-    4. [Automation Testing](#sol-automation-testing)
-    5. [Enhancement](#sol-enhancement)
+    2. [Motivations of Technical Choices](#sol-motivation)
+    3. [Discussion and Enhancement](#sol-discussion-enhancement)
 
 
 ## 1. Problem <a id='prob'></a>
@@ -27,20 +25,16 @@ During fetching the coordinates to create coordinates CSV file, it takes long ti
 
 ## 2. Solution <a id='sol'></a>
 ### 2.1. Description <a id="sol-description"></a>
-Solution focuses on back - end. At first, we process the movies' location before sending query URL to Nominatim. 
-After getting the needed coordinates, we must save these so I created a new CSV file which contains the base attributes of provided dataset and 2 new attributes Latitude and Longitude.
+Solution focuses on back-end. At first, we process the movies' location before sending query URL to Nominatim. After getting the needed coordinates, we have to save these so I created a new CSV file which contains the base attributes of provided dataset and 2 new attributes Latitude and Longitude. Then we pass the received coordinate values from server side to client side, in this client side, we will create markers with [Leaflet](https://leafletjs.com/) (a Javascript library for interactive map) and show on the map.
 
-### 2.2. Movivations of Choices <a id="sol-motivation"></a>
-Nguyên do đưa ra giải pháp
+On the screen we are showing to user, I have add an autocomplete search input. When the user fill in with some values of movies' title, a dropdown list of movie titles will be showed so that the user can choose one and the markers of choosen movie's locations will be re-displayed according to choose movie.
 
-### 2.3. Discussion <a id="sol-discussion"></a>
-Đánh đổi những gì
+### 2.2. Motivations of Technical Choices <a id="sol-motivation"></a>
+Because we have to do some analysis on the location values, I decided to use Python for back-end due to advantages of analysis from this high-level language. And the client screen does not require complex technology or functionalities, so I decided to use [Flask](https://flask.palletsprojects.com/en/2.2.x/) (Flask is a web application framework written in Python and developed by Armin Ronacher).
 
-### 2.4. Automation Testing <a id='sol-automation-testing'></a>
-https://flask.palletsprojects.com/en/2.0.x/testing/
+With Flask, we can build simple back-end for the user to process Get or Post request and simple front-end for the user by combining Bootstrap.
 
-```
-py -m unittest discover
-```
+### 2.3. Discussion and Enhancement <a id="sol-discussion-enhancement"></a>
+We have to create coordinate CSV file so it will take time when there's no coordinates file. Be default, after starting server and no coordinate file, when the first request to root endpoint received, the system is going to create coordinate CSV file. This needs long time to process the first request so it's necessary to warn that the user will wait for long time.
 
-<!-- ## 3. Hồ sơ của tôi -->
+There are still movies' location not showed on the map so we have to improve the process that transforms location before applying to query URL if we want more movies' location showed accurately.
