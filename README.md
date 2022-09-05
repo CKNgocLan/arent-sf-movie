@@ -10,6 +10,7 @@
     1. [Description](#sol-description)
     2. [Motivations of Technical Choices](#sol-motivation)
     3. [Discussion and Enhancement](#sol-discussion-enhancement)
+    4. [Installation](#sol-installation)
 
 
 ## 1. Problem <a id='prob'></a>
@@ -38,6 +39,43 @@ With Flask, we can build simple back-end for the user to process Get or Post req
 We have to create coordinate CSV file so it will take time when there's no coordinates file. Be default, after starting server and no coordinate file, when the first request to root endpoint received, the system is going to create coordinate CSV file. This needs long time to process the first request so it's necessary to warn that the user will wait for long time.
 
 There are still movies' location not showed on the map so we have to improve the process that transforms location before applying to query URL if we want more movies' location showed accurately.
+
+### 2.4 Installation <a id="sol-installation"></a>
+Open CMD and do the following step below.
+
++ Install [pip](https://packaging.python.org/en/latest/key_projects/#pip)
+```
+py -m pip install --upgrade pip
+
+py -m pip --version
+```
+
++ Install virtual environment for Python: [virtualenv](https://packaging.python.org/en/latest/key_projects/#virtualenv)
+```
+py -m pip install --user virtualenv
+```
+
++ Create a virtual environment:
+```
+py -m venv venv
+```
+
++ Activate virtual environment:
+```
+venv\Scripts\activate
+```
+
++ Install dependencies with requirements.txt:
+```
+pip install -r requirements.txt
+```
+
++ Run Flask application:
+```
+py app.py
+```
+
+Here is [Web application address](http://localhost:5000/).
 
 Spent Time:
 
