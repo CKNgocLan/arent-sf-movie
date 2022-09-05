@@ -1,4 +1,3 @@
-
 # grequests
 import grequests
 import requests
@@ -28,28 +27,21 @@ coordinate_file = 'Coordinates.csv'
 
 app = Flask(__name__)
 
-# Read CSV file
-# df = pd.read_csv(coordinate_file)
 
 def preprocessAddress(address = ""):
     result = str(address).lower().replace(" ", "+").replace('streets', 'st')
     return "{}, San Francisco".format(result)
 
 def generateCoordinateCsv():
-    term_df = pd.read_csv(film_dataset_file)#.head(len(df.index))
+    term_df = pd.read_csv(film_dataset_file)
     search_url = os.getenv("SEARCH_URL")
     urls = list(map(lambda location: "{}?{}".format(search_url, urlencode({
         "q": preprocessAddress(location),
         "limit": 1,
         "format": "jsonv2"
     })), term_df['Locations'].values))
-
-    # print("TERM_DF")
-    # print(term_df)
-    # term_df.reset_index(drop=True)
     term_df.to_csv("term_df.csv", mode='w', index=False)
 
-    # unsent_responses = (grequests.get(url) for url in urls)
     print("Fetching coordinations...")
     responses = grequests.map((grequests.get(url) for url in urls), size=30)
     print("End of fetching coordinations...")
