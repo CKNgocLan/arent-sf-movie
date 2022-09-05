@@ -38,3 +38,14 @@ With Flask, we can build simple back-end for the user to process Get or Post req
 We have to create coordinate CSV file so it will take time when there's no coordinates file. Be default, after starting server and no coordinate file, when the first request to root endpoint received, the system is going to create coordinate CSV file. This needs long time to process the first request so it's necessary to warn that the user will wait for long time.
 
 There are still movies' location not showed on the map so we have to improve the process that transforms location before applying to query URL if we want more movies' location showed accurately.
+
+Spent Time:
+
+|   Date        |   Time|
+|:-------------:|------:|
+|	24/08/2022	|	3	|
+|	25/08/2022	|	2	|
+|	26/08/2022	|	0	|
+|	29/08/2022	|	0.5	|
+|	01/09/2022	|	3.5	|
+|	02/09/2022	|	2	|
